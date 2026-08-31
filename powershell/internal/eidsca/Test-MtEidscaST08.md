@@ -8,10 +8,14 @@ https://graph.microsoft.com/beta/settings
 .values -eq 'false'
 ```
 
+#### Remediation action
+
+[Microsoft Learn - Microsoft Entra cmdlets for configuring group settings](https://learn.microsoft.com/entra/identity/users/groups-settings-cmdlets#update-settings-at-the-directory-level)
+
 #### Related links
 
-- [Open in Graph Explorer](https://developer.microsoft.com/en-us/graph/graph-explorer?request=settings&method=GET&version=beta&GraphUrl=https://graph.microsoft.com)
-- [directorySetting resource type - Microsoft Graph beta | Microsoft Learn](https://learn.microsoft.com/en-us/graph/api/resources/directorysetting)
+- [Open in Graph Explorer](https://developer.microsoft.com/graph/graph-explorer?request=settings&method=GET&version=beta&GraphUrl=https://graph.microsoft.com)
+- [directorySetting resource type - Microsoft Graph beta | Microsoft Learn](https://learn.microsoft.com/graph/api/resources/directorysetting)
 
 
 

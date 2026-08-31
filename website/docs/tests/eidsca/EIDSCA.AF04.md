@@ -1,6 +1,6 @@
 ---
 title: "EIDSCA.AF04 - Authentication Method - FIDO2 security key - Enforce key restrictions."
-description: "Manages if registration of FIDO2 keys should be restricted. Restrict usage of FIDO2 from unauthorized vendors or platforms Test script ``` https://graph.microsoft.com/beta/policies/authenticationMethodsPolicy/authenticationMethodConfigurations('Fido2') .keyRestrictions.isEnforced -eq 'true' ``` Rel…"
+description: "Manages if registration of FIDO2 keys should be restricted. Restrict usage of FIDO2 from unauthorized vendors or platforms Test script ``` https://graph.microsoft.com/beta/policies/authenticationMethodsPolicy/authenticationMethodConfigurations('Fido2') .keyRestrictions.isEnforced -eq 'true' ``` Rem…"
 slug: /tests/EIDSCA.AF04
 className: generated-test-doc
 sidebar_class_name: hidden
@@ -19,6 +19,8 @@ keywords:
 
 # EIDSCA.AF04 - Authentication Method - FIDO2 security key - Enforce key restrictions.
 
+<div className="test-byline"><div className="test-byline-avatars"><a className="test-byline-avatar test-byline-avatar--author" href="/contributors/cloud-architekt" title="Thomas Naunheim · Original author"><img src="https://github.com/Cloud-Architekt.png" alt="Thomas Naunheim" /></a><a className="test-byline-avatar" href="/contributors/merill" title="Merill Fernando · Co-contributor"><img src="https://github.com/merill.png" alt="Merill Fernando" /></a><a className="test-byline-avatar" href="/contributors/f-bader" title="Fabian Bader · Co-contributor"><img src="https://github.com/f-bader.png" alt="Fabian Bader" /></a><a className="test-byline-avatar" href="/contributors/samerde" title="Sam Erde · Co-contributor"><img src="https://github.com/SamErde.png" alt="Sam Erde" /></a><a className="test-byline-avatar" href="/contributors/buckeyeguyjflo" title="John Flores · Co-contributor"><img src="https://github.com/BuckeyeGuyJFlo.png" alt="John Flores" /></a><a className="test-byline-avatar" href="/contributors/weycc81" title="Stefan Wey · Co-contributor"><img src="https://github.com/weyCC81.png" alt="Stefan Wey" /></a></div><div className="test-byline-meta"><span className="test-byline-text">Contributed by <a href="/contributors/cloud-architekt">Thomas Naunheim</a> with 5 co-contributors</span><a className="test-byline-link" href="/contributors">All contributors →</a></div></div>
+
 ## Overview
 
 Manages if registration of FIDO2 keys should be restricted.
@@ -31,10 +33,14 @@ https://graph.microsoft.com/beta/policies/authenticationMethodsPolicy/authentica
 .keyRestrictions.isEnforced -eq 'true'
 ```
 
+#### Remediation action
+
+[Microsoft Learn - Enable passkeys (FIDO2) for your organization: Enforce key restrictions](https://learn.microsoft.com/entra/identity/authentication/how-to-enable-passkey-fido2#passkey-optional-settings)
+
 #### Related links
 
-- [Open in Graph Explorer](https://developer.microsoft.com/en-us/graph/graph-explorer?request=policies/authenticationMethodsPolicy/authenticationMethodConfigurations('Fido2')&method=GET&version=beta&GraphUrl=https://graph.microsoft.com)
-- [fido2AuthenticationMethodConfiguration resource type - Microsoft Graph v1.0 | Microsoft Learn](https://learn.microsoft.com/en-us/graph/api/resources/fido2authenticationmethodconfiguration)
+- [Open in Graph Explorer](https://developer.microsoft.com/graph/graph-explorer?request=policies/authenticationMethodsPolicy/authenticationMethodConfigurations('Fido2')&method=GET&version=beta&GraphUrl=https://graph.microsoft.com)
+- [fido2AuthenticationMethodConfiguration resource type - Microsoft Graph v1.0 | Microsoft Learn](https://learn.microsoft.com/graph/api/resources/fido2authenticationmethodconfiguration)
 
 ## Test Metadata
 

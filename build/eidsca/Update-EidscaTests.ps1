@@ -15,9 +15,6 @@ param (
     # Folder where generated test file should be written to.
     [string] $TestFilePath = "$PSScriptRoot/../../tests/EIDSCA/Test-EIDSCA.Generated.Tests.ps1",
 
-    # Folder where docs should be generated
-    [string] $DocsPath = "$PSScriptRoot/../../website/docs/tests/eidsca",
-
     # Folder where control functions should be generated
     [string] $PowerShellFunctionsPath = "$PSScriptRoot/../../powershell/internal/eidsca",
 
@@ -43,6 +40,29 @@ function GetVersion($graphUri) {
         $apiVersion = 'beta'
     }
     return $apiVersion
+}
+
+function ConvertTo-LanguageNeutralMicrosoftUrl {
+    param (
+        [AllowEmptyString()]
+        [string] $Content
+    )
+
+    if ([string]::IsNullOrEmpty($Content)) {
+        return $Content
+    }
+
+    $languageNeutralDomains = @(
+        'developer.microsoft.com'
+        'docs.microsoft.com'
+        'learn.microsoft.com'
+        'support.microsoft.com'
+        'www.microsoft.com'
+    )
+    $domainPattern = ($languageNeutralDomains | ForEach-Object { [regex]::Escape($_) }) -join '|'
+    $languageSegmentPattern = '(?i)(https?://(?:' + $domainPattern + '))/[a-z]{2}-[a-z]{2}(?=/|[?#\s)\]}>.,;:''"]|$)'
+
+    return $Content -replace $languageSegmentPattern, '$1'
 }
 
 function GetRecommendedValue($RecommendedValue) {
@@ -135,6 +155,7 @@ function GetCompareOperator($RecommendedValue) {
 }
 
 function GetPageTitle($uri) {
+    $uri = ConvertTo-LanguageNeutralMicrosoftUrl -Content $uri
     $isValidUri = ($uri -as [System.URI]).AbsoluteURI -ne $null
 
     $title = ''
@@ -160,7 +181,7 @@ function GetPageMarkdownLink($uri) {
 }
 
 function GetGraphExplorerMarkDownLink($relativeUri, $apiVersion) {
-    $graphExplorerUrl = "https://developer.microsoft.com/en-us/graph/graph-explorer?request=$relativeUri&method=GET&version=$apiVersion&GraphUrl=https://graph.microsoft.com"
+    $graphExplorerUrl = "https://developer.microsoft.com/graph/graph-explorer?request=$relativeUri&method=GET&version=$apiVersion&GraphUrl=https://graph.microsoft.com"
     return "[Open in Graph Explorer]($graphExplorerUrl)"
 }
 
@@ -279,6 +300,13 @@ mindmap
     return $mermaid
 }
 
+function GetRemediationMarkdown($controlItem) {
+    if ([string]::IsNullOrWhiteSpace($controlItem.HowToFix)) {
+        return ''
+    }
+    return "#### Remediation action`n`n$($controlItem.HowToFix)"
+}
+
 function GetMarkdownLink($uri, $title, [switch]$lookupTitle) {
     if ([string]::IsNullOrEmpty($uri)) { return '' }
     if ($lookupTitle) {
@@ -320,6 +348,7 @@ function UpdateTemplate($template, $control, $controlItem, $docName, $isDoc) {
     $psFunctionName = GetEidscaPsFunctionName -checkId $controlItem.CheckId
     $portalDeepLinkMarkdown = GetPortalDeepLinkMarkdown -portalDeepLink $controlItem.PortalDeepLink
     $graphDocsUrlMarkdown = GetMarkdownLink -uri $control.GraphDocsUrl -title "Graph Docs" -lookupTitle
+    $remediationAction = GetRemediationMarkdown -controlItem $controlItem
 
     $output = ''
     if ($currentValue -eq '' -or $control.ControlName -eq '') {
@@ -374,7 +403,7 @@ function UpdateTemplate($template, $control, $controlItem, $docName, $isDoc) {
         $output = $output -replace '%CurrentValue%', $CurrentValue
         $output = $output -replace '%GraphEndPoint%', $control.GraphEndpoint
         $output = $output -replace '%GraphDocsUrl%', $graphDocsUrl
-        $output = $output -replace '%HowToFix%', $controlItem.howToFix
+        $output = $output.Replace('%RemediationAction%', $remediationAction)
         $output = $output -replace '%GraphExplorerUrl%', $graphExplorerUrl
         $output = $output -replace '%MitreDiagram%', $mitreDiagram
         $output = $output -replace '%PSFunctionName%', $psFunctionName
@@ -399,7 +428,7 @@ function UpdateTemplate($template, $control, $controlItem, $docName, $isDoc) {
         $output = $output -replace '%TestCases%', ""
     }
 
-    return $output
+    return ConvertTo-LanguageNeutralMicrosoftUrl -Content $output
 }
 
 # Returns the contents of a file named @template.txt at the given folder path
@@ -408,9 +437,20 @@ function GetTemplate($folderPath, $templateFileName = "@template.txt") {
     return Get-Content $templateFilePath -Raw
 }
 
+function RemoveTrailingWhitespace($content) {
+    return $content -replace '(?m)[ \t]+$', ''
+}
+
 function CreateFile($folderPath, $fileName, $content) {
     $filePath = Join-Path $folderPath $fileName
-    $content | Out-File $filePath -Encoding utf8
+    if ($content -match "`r`n") {
+        $newLine = "`r`n"
+    } else {
+        $newLine = "`n"
+    }
+    $content = RemoveTrailingWhitespace $content
+    $content = $content -replace '(\r?\n)+$', ''
+    [System.IO.File]::WriteAllText($filePath, "$content$newLine", [System.Text.UTF8Encoding]::new($false))
 }
 
 function GetEidscaPsFunctionName($checkId) {
@@ -432,11 +472,10 @@ $aadsc = ($aadsc | Where-Object { $_.CollectedBy -eq "Maester" }).ControlArea
 $Discovery = ($aadsc | Where-Object { $_.discovery -ne "" }).Discovery
 
 # Remove previously generated files
-Get-ChildItem -Path $DocsPath -Filter "*.md" -Exclude "readme.md" | Remove-Item -Force
 Get-ChildItem -Path $PowerShellFunctionsPath -Filter "*" -Exclude "@template*" | Remove-Item -Force
 
-$docsTemplate = GetTemplate $DocsPath
 $psTemplate = GetTemplate $PowerShellFunctionsPath "@templateps1.txt" # Use the .txt extension to avoid running the script
+# The website docs generator consumes the internal Markdown generated from this template.
 $psMarkdownTemplate = GetTemplate $PowerShellFunctionsPath "@template.md"
 
 $sb = [System.Text.StringBuilder]::new()
@@ -474,7 +513,6 @@ Describe "EIDSCA" -Tag "EIDSCA",  "%CheckId%" {
 '@
 
         $testOutput = UpdateTemplate -template $testTemplate -control $control -controlItem $controlItem -docName $docName
-        $docsOutput = UpdateTemplate -template $docsTemplate -control $control -controlItem $controlItem -docName $docName -isDoc $true
         $psOutput = UpdateTemplate -template $psTemplate -control $control -controlItem $controlItem -docName $docName
 
         $psMarkdownOutput = UpdateTemplate -template $psMarkdownTemplate -control $control -controlItem $controlItem -docName $docName -isDoc $true
@@ -482,7 +520,6 @@ Describe "EIDSCA" -Tag "EIDSCA",  "%CheckId%" {
         if ($testOutput -ne '') {
             [void]$testOutputList.AppendLine($testOutput)
 
-            CreateFile $DocsPath "$docName.md" $docsOutput
             $psFunctionName = GetEidscaPsFunctionName -checkId $controlItem.CheckId
             CreateFile $PowerShellFunctionsPath "$psFunctionName.ps1" $psOutput
             CreateFile $PowerShellFunctionsPath "$psFunctionName.md" $psMarkdownOutput
@@ -513,4 +550,11 @@ $discoveryLines += [System.Environment]::NewLine
 $output = $output.Replace('<DiscoveryFromJson>', $discoveryLines)
 
 $output += $sb.ToString()
-$output | Out-File $TestFilePath -Encoding utf8
+if ($output -match "`r`n") {
+    $newLine = "`r`n"
+} else {
+    $newLine = "`n"
+}
+$output = RemoveTrailingWhitespace $output
+$output = $output -replace '(\r?\n)+$', ''
+[System.IO.File]::WriteAllText($TestFilePath, "$output$newLine", [System.Text.UTF8Encoding]::new($false))

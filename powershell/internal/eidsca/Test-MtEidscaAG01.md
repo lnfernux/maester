@@ -8,10 +8,14 @@ https://graph.microsoft.com/beta/policies/authenticationMethodsPolicy
 .policyMigrationState -in @('migrationComplete', '')
 ```
 
+#### Remediation action
+
+[Microsoft Learn - How to manage authentication methodes](https://learn.microsoft.com/entra/identity/authentication/how-to-authentication-methods-manage#start-the-migration)
+
 #### Related links
 
-- [Open in Graph Explorer](https://developer.microsoft.com/en-us/graph/graph-explorer?request=policies/authenticationMethodsPolicy&method=GET&version=beta&GraphUrl=https://graph.microsoft.com)
-- [Get authenticationMethodsPolicy - Microsoft Graph v1.0 | Microsoft Learn](https://learn.microsoft.com/en-us/graph/api/authenticationmethodspolicy-get)
+- [Open in Graph Explorer](https://developer.microsoft.com/graph/graph-explorer?request=policies/authenticationMethodsPolicy&method=GET&version=beta&GraphUrl=https://graph.microsoft.com)
+- [Get authenticationMethodsPolicy - Microsoft Graph v1.0 | Microsoft Learn](https://learn.microsoft.com/graph/api/authenticationmethodspolicy-get)
 - [View in Microsoft Entra admin center](https://entra.microsoft.com/#view/Microsoft_AAD_IAM/AuthenticationMethodsMenuBlade/~/AdminAuthMethods)
 
 

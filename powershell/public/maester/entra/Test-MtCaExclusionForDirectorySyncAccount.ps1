@@ -1,19 +1,32 @@
 ﻿function Test-MtCaExclusionForDirectorySyncAccount {
     <#
     .Synopsis
-    Checks if all conditional access policies scoped to all cloud apps and all users exclude the directory synchronization accounts
+    Checks whether Conditional Access policies exclude user-based Microsoft Entra Connect synchronization identities.
 
     .Description
-    The directory synchronization accounts are used to synchronize the on-premises directory with Entra ID.
-    These accounts should be excluded from all conditional access policies scoped to all cloud apps and all users.
-    Entra ID connect does not support multifactor authentication.
-    Restrict access with these accounts to trusted networks.
+    Microsoft Entra Connect uses a connector identity to synchronize an on-premises directory with Microsoft Entra ID.
+    Legacy installations can use a user-based directory synchronization account. These accounts should be excluded from
+    Conditional Access policies scoped to all cloud apps and all users, and their access should be restricted to trusted
+    networks.
+
+    New installations of Microsoft Entra Connect 2.5.76.0 or later use application-based authentication by default, with a
+    service principal and certificate instead of a user account and password. Existing installations do not switch to
+    application-based authentication automatically.
+
+    This test evaluates user principals assigned to the directory synchronization roles. It passes automatically when no
+    user principals remain, because Conditional Access user exclusions do not apply to service principals; the test does not
+    need to be muted. To verify the authentication method currently used, run Get-ADSyncEntraConnectorCredential on every
+    Microsoft Entra Connect server and confirm that ConnectorIdentityType is Application. After verifying the migration,
+    remove the legacy directory synchronization account or remove its directory synchronization role assignment.
 
     .Example
     Test-MtCaExclusionForDirectorySyncAccount
 
     .LINK
     https://maester.dev/docs/commands/Test-MtCaExclusionForDirectorySyncAccount
+
+    .LINK
+    https://learn.microsoft.com/entra/identity/hybrid/connect/authenticate-application-id
     #>
     [CmdletBinding()]
     [OutputType([bool])]
@@ -24,20 +37,42 @@
         return $null
     }
 
-    $testDescription = 'It is recommended to exclude directory/OnPremises synchronization accounts from all conditional access policies scoped to all cloud apps.'
-    $testResult = "The following conditional access policies are scoped to all users but don't exclude the directory/OnPremises synchronization accounts:`n`n"
+    $testDescription = 'It is recommended to exclude directory/OnPremises synchronization accounts from all Conditional Access policies scoped to all cloud apps.'
+    $testResult = "The following Conditional Access policies are scoped to all users but don't exclude the directory/OnPremises synchronization accounts:`n`n"
 
     try {
         $DirectorySynchronizationAccountsRole = Get-MtRoleInfo -RoleName 'DirectorySynchronizationAccounts'
         $OnPremisesDirectorySyncAccountRole = Get-MtRoleInfo -RoleName 'OnPremisesDirectorySyncAccount'
 
         $Members = @()
-        $Members += Get-MtRoleMember -RoleId $DirectorySynchronizationAccountsRole
-        $Members += Get-MtRoleMember -RoleId $OnPremisesDirectorySyncAccountRole
+        $DirectorySynchronizationAccountsRoleId = $null
+        $OnPremisesDirectorySyncAccountRoleId = $null
+        # Guard: Get-MtRoleInfo returns $null when $script:MtRoles is uninitialised (module reload issue).
+        # Skip the Get-MtRoleMember call in that case to avoid a mandatory-parameter binding error.
+        if ($null -ne $DirectorySynchronizationAccountsRole) {
+            $DirectorySynchronizationAccountsRoleId = $DirectorySynchronizationAccountsRole.Id
+            $Members += Get-MtRoleMember -RoleId $DirectorySynchronizationAccountsRoleId
+        }
+        if ($null -ne $OnPremisesDirectorySyncAccountRole) {
+            $OnPremisesDirectorySyncAccountRoleId = $OnPremisesDirectorySyncAccountRole.Id
+            $Members += Get-MtRoleMember -RoleId $OnPremisesDirectorySyncAccountRoleId
+        }
         $Members = @($Members | Where-Object { $null -ne $_ })
 
         if ( $Members.Count -eq 0 ) {
             Add-MtTestResultDetail -Description $testDescription -Result 'This tenant does not have directory synchronization accounts and therefore this test is not applicable.'
+            return $true
+        }
+
+        # Classify role members by whether Conditional Access user targeting applies. Role membership establishes
+        # whether user principals need CA handling, but it does not prove which credential an active Connect server uses.
+        $userSyncMembers = @($Members | Where-Object { $_.'@odata.type' -ne '#microsoft.graph.servicePrincipal' })
+        $spSyncMembers   = @($Members | Where-Object { $_.'@odata.type' -eq '#microsoft.graph.servicePrincipal' })
+
+        if ( $userSyncMembers.Count -eq 0 -and $spSyncMembers.Count -gt 0 ) {
+            $spNames = ( $spSyncMembers | Where-Object { $_.displayName } | ForEach-Object { $_.displayName } ) -join ', '
+            if ( -not $spNames ) { $spNames = 'unknown' }
+            Add-MtTestResultDetail -Description $testDescription -Result "Only service principals are assigned to the directory synchronization roles ($spNames). Conditional Access user exclusions do not apply to service principals, so this test is not applicable. Role membership alone does not confirm that an active Microsoft Entra Connect server uses application-based authentication; verify each server with Get-ADSyncEntraConnectorCredential."
             return $true
         }
 
@@ -73,8 +108,8 @@
 
             $PolicyIncludesAnyMember = $false
             $PolicyIncludesRole = $false
-            # Excluding service principals, because they cannot be excluded from policies and therefore do not have to be included in the policies to bypass them.
-            $memberIds = @($Members | Where-Object { $_.'@odata.type' -ne '#microsoft.graph.servicePrincipal' } | ForEach-Object { $_.id })
+            # Use the pre-computed $userSyncMembers list (service principals excluded above).
+            $memberIds = @($userSyncMembers | ForEach-Object { $_.id })
 
             foreach ($memberId in $memberIds) {
                 if ( $memberId -in $policy.conditions.users.includeUsers ) {
@@ -83,7 +118,7 @@
                 }
             }
 
-            if ( $DirectorySynchronizationAccountsRole -in $policy.conditions.users.includeRoles -or $OnPremisesDirectorySyncAccountRole -in $policy.conditions.users.includeRoles ) {
+            if ( $DirectorySynchronizationAccountsRoleId -in $policy.conditions.users.includeRoles -or $OnPremisesDirectorySyncAccountRoleId -in $policy.conditions.users.includeRoles ) {
                 $PolicyIncludesRole = $true
             }
 
@@ -99,7 +134,7 @@
                 continue
             } else {
                 # Check if excluded by role
-                $excludedByRole = $DirectorySynchronizationAccountsRole -in $policy.conditions.users.excludeRoles -or $OnPremisesDirectorySyncAccountRole -in $policy.conditions.users.excludeRoles
+                $excludedByRole = $DirectorySynchronizationAccountsRoleId -in $policy.conditions.users.excludeRoles -or $OnPremisesDirectorySyncAccountRoleId -in $policy.conditions.users.excludeRoles
 
                 # Check if all user members are individually excluded
                 $excludedByMember = $memberIds.Count -gt 0 -and @($memberIds | Where-Object { $_ -notin $policy.conditions.users.excludeUsers }).Count -eq 0
@@ -119,7 +154,7 @@
         }
 
         if ( $result ) {
-            $testResult = 'All conditional access policies scoped to all cloud apps exclude the directory synchronization accounts.'
+            $testResult = 'All Conditional Access policies scoped to all cloud apps exclude the directory synchronization accounts.'
         }
 
         Add-MtTestResultDetail -Description $testDescription -Result $testResult

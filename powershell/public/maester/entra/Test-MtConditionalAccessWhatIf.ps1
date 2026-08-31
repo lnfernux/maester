@@ -10,7 +10,7 @@
 
     Learn more:
     https://learn.microsoft.com/entra/identity/conditional-access/what-if-tool
-    https://learn.microsoft.com/en-us/powershell/module/microsoft.graph.beta.identity.signins/test-mgbetaidentityconditionalaccess?view=graph-powershell-beta
+    https://learn.microsoft.com/powershell/module/microsoft.graph.beta.identity.signins/test-mgbetaidentityconditionalaccess?view=graph-powershell-beta
 
     .EXAMPLE
     Test-MtConditionalAccessWhatIf -UserId '7a6da1c3-616a-416b-a820-cbe4fa8e225e' `
@@ -212,7 +212,7 @@
         Write-Verbose ( $ConditionalAccessWhatIfBodyParameter | ConvertTo-Json -Depth 99 -Compress )
 
         try {
-            $ConditionalAccessWhatIfResult = Invoke-MgGraphRequest -Method POST -Uri 'https://graph.microsoft.com/beta/identity/conditionalAccess/evaluate' -OutputType PSObject -Body ( $ConditionalAccessWhatIfBodyParameter | ConvertTo-Json -Depth 99 -Compress ) | Select-Object -ExpandProperty value
+            $ConditionalAccessWhatIfResult = Invoke-MgGraphRequest -Method POST -Uri '/beta/identity/conditionalAccess/evaluate' -OutputType PSObject -Body ( $ConditionalAccessWhatIfBodyParameter | ConvertTo-Json -Depth 99 -Compress ) | Select-Object -ExpandProperty value
             # Filter out policies that do not apply
             if (!$AllResults) {
                 $ConditionalAccessWhatIfResult = $ConditionalAccessWhatIfResult | Where-Object { $_.policyApplies -eq $true }

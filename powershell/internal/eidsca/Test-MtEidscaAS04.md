@@ -8,10 +8,14 @@ https://graph.microsoft.com/beta/policies/authenticationMethodsPolicy/authentica
 .includeTargets.isUsableForSignIn -eq 'false'
 ```
 
+#### Remediation action
+
+[Microsoft Learn - Configure and enable users for SMS-based authentication using Microsoft Entra ID](https://learn.microsoft.com/entra/identity/authentication/howto-authentication-sms-signin)
+
 #### Related links
 
-- [Open in Graph Explorer](https://developer.microsoft.com/en-us/graph/graph-explorer?request=policies/authenticationMethodsPolicy/authenticationMethodConfigurations('Sms')&method=GET&version=beta&GraphUrl=https://graph.microsoft.com)
-- [phoneAuthenticationMethod resource type - Microsoft Graph v1.0 | Microsoft Learn](https://learn.microsoft.com/en-us/graph/api/resources/phoneauthenticationmethod)
+- [Open in Graph Explorer](https://developer.microsoft.com/graph/graph-explorer?request=policies/authenticationMethodsPolicy/authenticationMethodConfigurations('Sms')&method=GET&version=beta&GraphUrl=https://graph.microsoft.com)
+- [phoneAuthenticationMethod resource type - Microsoft Graph v1.0 | Microsoft Learn](https://learn.microsoft.com/graph/api/resources/phoneauthenticationmethod)
 
 
 

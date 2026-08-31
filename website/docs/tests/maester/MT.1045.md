@@ -1,6 +1,6 @@
 ---
 title: "MT.1045 - Only invited users should be automatically admitted to Teams meetings"
-description: "Tests the connection for each service and returns $true if the session is connected to the specified service."
+description: "Only invited users should be automatically admitted to Teams meetings"
 slug: /tests/MT.1045
 className: generated-test-doc
 sidebar_class_name: hidden
@@ -17,9 +17,11 @@ keywords:
 
 # MT.1045 - Only invited users should be automatically admitted to Teams meetings
 
+<div className="test-byline"><div className="test-byline-avatars"><a className="test-byline-avatar test-byline-avatar--author" href="/contributors/weycc81" title="Stefan Wey · Original author"><img src="https://github.com/weyCC81.png" alt="Stefan Wey" /></a><a className="test-byline-avatar" href="/contributors/soulemike" title="Michael Soule · Co-contributor"><img src="https://github.com/soulemike.png" alt="Michael Soule" /></a><a className="test-byline-avatar" href="/contributors/merill" title="Merill Fernando · Co-contributor"><img src="https://github.com/merill.png" alt="Merill Fernando" /></a><a className="test-byline-avatar" href="/contributors/samerde" title="Sam Erde · Co-contributor"><img src="https://github.com/SamErde.png" alt="Sam Erde" /></a><a className="test-byline-avatar" href="/contributors/svrooij" title="Stephan van Rooij · Co-contributor"><img src="https://github.com/svrooij.png" alt="Stephan van Rooij" /></a></div><div className="test-byline-meta"><span className="test-byline-text">Contributed by <a href="/contributors/weycc81">Stefan Wey</a> with 4 co-contributors</span><a className="test-byline-link" href="/contributors">All contributors →</a></div></div>
+
 ## Overview
 
-Tests the connection for each service and returns $true if the session is connected to the specified service.
+Only invited users should be automatically admitted to Teams meetings
 
 ## Test Metadata
 
@@ -29,10 +31,8 @@ Tests the connection for each service and returns $true if the session is connec
 | Severity | Medium |
 | Suite | Maester |
 | Category | Teams |
-| PowerShell test | [Test-MtConnection](/docs/commands/Test-MtConnection) |
 | Tags | Maester, MT.1045, Teams |
 
 ## Source
 
 - Pester test: `tests/Maester/Teams/Test-TeamsMeeting.Tests.ps1`
-- PowerShell source: `powershell/public/core/Test-MtConnection.ps1`
